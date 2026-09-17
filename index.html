@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filmový výběr kina</title>
+    <style>
+        /* Načtení ozdobného fontu pro nadpis */
+        @font-face {
+            font-family: 'AlexBrush';
+            src: url('AlexBrush.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        /* Načtení fontu pro veškerý ostatní text */
+        @font-face {
+            font-family: 'ElmsSans';
+            src: url('ElmsSans.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        :root {
+            /* Barevné proměnné pro růžovo-bílé téma */
+            --bg-base: #fff5f8;
+            --card-bg: #ffe4ec;
+            --btn-bg: #ffd1dc;
+            --btn-hover: #ffb6c1;
+            
+            --accent: #d81b60;
+            --accent-hover: #ad1457;
+            
+            /* Hodně tmavě růžová pro veškeré texty */
+            --text-main: #4a0e21;
+            --text-muted: #7a2b45;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'ElmsSans', 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            /* Světlé růžovo-bílé pozadí s tečkami a hvězdičkami */
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(255, 182, 193, 0.4) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(255, 228, 235, 0.6) 0%, transparent 40%),
+                radial-gradient(#ffccd5 1.5px, transparent 1.5px),
+                radial-gradient(#ffffff 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 30px 30px, 40px 40px;
+            background-position: 0 0, 0 0, 0 0, 15px 15px;
+            
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Plovoucí obrázky v pozadí */
+        .floating-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .floating-img {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            object-fit: cover;
+            animation: floatAround 18s infinite linear;
+        }
+
+        /* Různé pozice, velikosti a rychlosti pro plovoucí obrázky */
+        .floating-img:nth-child(1) { top: 10%; left: 10%; animation-duration: 22s; animation-delay: 0s; }
+        .floating-img:nth-child(2) { top: 70%; left: 15%; animation-duration: 25s; animation-delay: -3s; width: 90px; height: 90px; }
+        .floating-img:nth-child(3) { top: 20%; left: 80%; animation-duration: 19s; animation-delay: -5s; width: 60px; height: 60px; }
+        .floating-img:nth-child(4) { top: 80%; left: 85%; animation-duration: 28s; animation-delay: -2s; width: 80px; height: 80px; }
+        .floating-img:nth-child(5) { top: 45%; left: 5%; animation-duration: 21s; animation-delay: -7s; }
+        .floating-img:nth-child(6) { top: 35%; left: 90%; animation-duration: 24s; animation-delay: -4s; width: 75px; height: 75px; }
+
+        @keyframes floatAround {
+            0% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+            25% {
+                transform: translate(60px, 80px) rotate(90deg);
+            }
+            50% {
+                transform: translate(-40px, 140px) rotate(180deg);
+            }
+            75% {
+                transform: translate(-70px, 50px) rotate(270deg);
+            }
+            100% {
+                transform: translate(0, 0) rotate(360deg);
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 650px;
+            width: 100%;
+            box-shadow: 0 15px 35px rgba(216, 27, 96, 0.1);
+            text-align: center;
+            border: 1px solid rgba(216, 27, 96, 0.2);
+        }
+
+        /* Uvítací nadpis s fontem Alex Brush */
+        h1 {
+            font-family: 'AlexBrush', cursive;
+            font-size: 3.4rem;
+            font-weight: normal;
+            line-height: 1.2;
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+
+        button {
+            font-family: 'ElmsSans', 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px 35px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+            transform: scale(1.03);
+        }
+
+        /* Sekce kvízu */
+        .quiz-section, .result-section {
+            display: none;
+        }
+
+        .progress-bar {
+            color: var(--accent);
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .question-title {
+            font-size: 1.4rem;
+            margin-bottom: 25px;
+            line-height: 1.4;
+            color: var(--text-main);
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: var(--btn-bg);
+            color: var(--text-main);
+            border: 1px solid rgba(216, 27, 96, 0.2);
+            padding: 16px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 4px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .option-btn:hover {
+            background: var(--btn-hover);
+            border-color: rgba(216, 27, 96, 0.4);
+            transform: translateX(4px);
+        }
+
+        .opt-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.3;
+        }
+
+        .opt-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.3;
+            margin-bottom: 6px;
+        }
+
+        /* Tlačítko přehrání zvuku */
+        .audio-play-btn {
+            background: rgba(216, 27, 96, 0.1);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .audio-play-btn:hover {
+            background: var(--accent);
+            color: #ffffff;
+            transform: scale(1.05);
+        }
+
+        /* Výsledková stránka */
+        .result-title {
+            font-size: 2.2rem;
+            color: var(--accent);
+            margin: 15px 0 10px 0;
+        }
+
+        /* Obrázek výsledného filmu */
+        .result-img {
+            width: 100%;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(216, 27, 96, 0.2);
+        }
+
+        .movie-meta {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+        }
+
+        .meta-pill {
+            background: rgba(216, 27, 96, 0.1);
+            padding: 5px 12px;
+            border-radius: 20px;
+            color: var(--text-main);
+        }
+
+        .movie-desc {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--accent);
+            text-align: left;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: var(--text-main);
+        }
+
+        /* Obrázek pod textem odpovědi */
+        .option-img {
+            width: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 4px;
+        }
+
+        .option-video {
+            width: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 4px;
+            pointer-events: none;
+        }
+
+        .option-btn:has(> .option-video:only-child) {
+            padding: 0;
+        }
+
+        .option-btn:has(> .option-video:only-child) .option-video {
+            height: 180px;
+            margin-top: 0;
+            border-radius: 11px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Plovoucí obrázky v pozadí -->
+    <div class="floating-bg">
+        <img src="pig.png" class="floating-img" alt="">
+        <img src="pig.png" class="floating-img" alt="">
+        <img src="pig.png" class="floating-img" alt="">
+        <img src="pig.png" class="floating-img" alt="">
+        <img src="pig.png" class="floating-img" alt="">
+        <img src="pig.png" class="floating-img" alt="">
+        <img src="pig.png" class="floating-img" alt="">
+        <img src="pig.png" class="floating-img" alt="">
+        <img src="pig.png" class="floating-img" alt="">
+        <img src="pig.png" class="floating-img" alt="">
+    </div>
+
+<div class="container">
+    <!-- 1. ÚVODNÍ STRÁNKA -->
+    <div id="welcome-box">
+        <h1>Vítej u cinema quizu!</h1>
+        <p class="subtitle">Odpověz na 7 rychlých otázek a zjisti, který film bychom dnes večer měli spolu shlédnout.</p>
+        <button class="btn-primary" onclick="startQuiz()">Spustit úžasný cinema quiz</button>
+    </div>
+
+    <!-- 2. KVÍZOVÉ OTÁZKY -->
+    <div id="quiz-box" class="quiz-section">
+        <div id="progress" class="progress-bar">Otázka 1 ze 7</div>
+        <div id="question" class="question-title">Načítám otázku...</div>
+        <div id="options" class="options-list"></div>
+    </div>
+
+    <!-- 3. VÝSLEDEK -->
+    <div id="result-box" class="result-section">
+        <p style="color: var(--text-muted); font-size: 1.1rem;">Dnes večer bychom měli jít na:</p>
+        <h2 id="res-movie" class="result-title">Název filmu</h2>
+        
+        <!-- Zde se dynamicky zobrazí obrázek vybraného filmu -->
+        <img id="res-img" class="result-img" src="" alt="Obrázek filmu">
+
+        <div class="movie-meta">
+            <span class="meta-pill" id="res-time">Čas</span>
+            <span class="meta-pill" id="res-genre">Žánr</span>
+            <span class="meta-pill" id="res-length">Délka</span>
+            <span class="meta-pill" id="res-score">Hodnocení</span>
+        </div>
+
+        <div class="movie-desc" id="res-desc">
+            Popis filmu...
+        </div>
+
+        <button class="btn-primary" onclick="restartQuiz()">Zkusit znovu</button>
+    </div>
+</div>
+
+<script>
+    const movies = {
+        "call": {
+            title: "Call",
+            time: "Dnes v 18:40",
+            genre: "Psychologický Thriller / Drama",
+            length: "61 min",
+            score: "Česko (2026)",
+            desc: "Adamova slabost pro sexuální videohovory spustí lavinu událostí, která mu během jediného odpoledne zničí život.",
+            img: "call_poster.jpg"
+        },
+        "hope": {
+            title: "Hope",
+            time: "Dnes v 19:40",
+            genre: "Sci-Fi / Horor / Thriller",
+            length: "160 min",
+            score: "70%",
+            desc: "V odlehlé jihokorejské vesnici začne řádit neznámý tvor.",
+            img: "hope.jpg"
+        },
+        "christopherove": {
+            title: "Christopherové",
+            time: "Dnes v 18:20",
+            genre: "Komedie / Krimi / Drama",
+            length: "100 min",
+            score: "68%",
+            desc: "Starý výstřední malíř se 20 let nedotkl štětce.",
+            img: "christopher.jpg"
+        },
+        "insidious": {
+            title: "Insidious: Jsou mezi námi",
+            time: "Dnes ve 21:30",
+            genre: "Horor / Mysteriózní / Thriller",
+            length: "106 min",
+            score: "68%",
+            desc: "Mladá matka zjistí, že umí nejen vstupovat do temné říše ztracených duší (Dálavy), ale také z ní přivádět bytosti do našeho světa.",
+            img: "insidious.jpg"
+        },
+        "odyssea": {
+            title: "Odyssea",
+            time: "Dnes ve 20:30",
+            genre: "Akční / Dobrodružný / Fantasy",
+            length: "172 min",
+            score: "85%",
+            desc: "Epický návrat krále Odyssea domů po dobytí Tróje. Čeká ho hněv bohů, nestvůry, obři i svůdné kouzelnice.",
+            img: "odyssea.jpg"
+        },
+        "opusteny": {
+            title: "Opuštěný",
+            time: "Dnes ve 20:10",
+            genre: "Drama podle skutečnosti",
+            length: "100 min",
+            score: "77%",
+            desc: "Mrazivá rekonstrukce posledních dní francouzského učitele Samuela Patyho. Ukazuje, jak jedna debata o svobodě slova vedla k tragédii.",
+            img: "opusteny.jpg"
+        },
+        "resident_evil": {
+            title: "Resident Evil",
+            time: "Dnes 19:30, 20:30 nebo 21:30",
+            genre: "Akční / Sci-Fi / Horor",
+            length: "90 min",
+            score: "79%",
+            desc: "Obyčejný kurýr Bryan doručuje zásilku do Raccoon City přesně v noc, kdy vypukne zombie nákaza.",
+            img: "residentevil.jpg"
+        }
+    };
+
+    const questions = [
+        {
+            q: "Jako které zvíře se dnes cítíš?",
+            options: [
+                { title: "Cítím se jako gepard", desc: "Jedu na 200 %, chci to sfouknout hned a nemám čas ztrácet čas", film: "call", img: "gepard.jpeg" },
+                { title: "Cítím se jako kocour", desc: "Mám nohy nahoře, chci se bavit a sledovat, jak se ostatní snaží", film: "christopherove", img: "kocour.jpeg" },
+                { title: "Cítím se jako had", desc: "Číhám potichu ve vysoké trávě a čekám na ideální moment překvapení", film: "insidious", img: "had.jpeg" },
+                { title: "Cítím se jako divočák", desc: "S vypnoutou hlavou, prorážím zdi a neřeším, co mi stojí v cestě", film: "resident_evil", img: "divocak.jpeg" }
+            ]
+        },
+        {
+            q: "Kdyby sis mohl vybrat jeden z následujících obrazů, který by sis doma pověsil na zeď?",
+            options: [
+                {film: "christopherove", img: "tajnaschuzka.jpeg"},
+                {film: "insidious", img: "temnakrajina.jpeg" },
+                {film: "odyssea", img: "epickaboure.jpeg" },
+                {film: "resident_evil", img: "neon.jpeg" }
+            ]
+        },
+        {
+            q: "Který titulek na hlavní straně novin by tě zaujal nejvíce a donutil tě číst dál?",
+            options: [
+                {film: "hope", img: "odlehlehvozdy.jpeg"},
+                {film: "christopherove", img: "padelatelka.jpeg"},
+                {film: "opusteny", img: "lzivystatus.jpeg" },
+                {film: "resident_evil", img: "karantena.jpeg" }
+            ]
+        },
+        {
+            q: "Která z těchto situací by tě v životě vyděsila nejvíc?",
+            options: [
+                { text: "Když omylem pošleš do rodinné skupiny video, které nikdo nikdy neměl vidět", film: "call"},
+                { text: "Když v noci za chatou uslyšíš zvuky tvora, který biologicky nemůže existovat", film: "hope"},
+                { text: "Uvíznout na druhém konci světa bez spojení a muset se probíjet roky zpátky domů", film: "odyssea"},
+                { text: "Říct ve třídě nebo v práci svůj upřímný názor a sledovat, jak tě za to všichni začnou nenávidět", film: "opusteny"}
+            ]
+        },
+        {
+            q: "Představ si úplné ticho. Který z těchto zvuků by v tobě vyvolal největší paniku?",
+            options: [
+                { text: "Opakovaný tón příchozího hovoru z neznámého čísla, o kterém víš, že ho nesmíš zvednout", film: "call", audio: "call.mp3" },
+                { text: "Praskání kmenů stromů a těžké, zrychlující se kroky, které se blíží k tvému posedu", film: "hope", audio: "footsteps.mp3" },
+                { text: "Dětský smích vycházející ze zdi a pomalé vrzání dveří do sklepa", film: "insidious", audio: "laughter.mp3" },
+                { text: "Hlasitý, rozzuřený dav skandující tvoje jméno přímo před vchodovými dveřmi", film: "opusteny", audio: "crowd.mp3" }
+            ]
+        },
+        {
+            q: "Jak dlouhý večer dnes plánuješ?",
+            options: [
+                { title: "60 minut", desc: "Intenzivní jednohubka", film: "call" },
+                { title: "170 minut", desc: "Epický maraton se vším všudy", film: "odyssea" },
+                { title: "100 minut", desc: "Film na zamyšlení", film: "opusteny" },
+                { title: "90 minut", desc: "Čistá akce", film: "resident_evil" }
+            ]
+        },
+        {
+            q: "Kdybys mohl z dnešního zážitku dostat jeden záhadný artefakt, který si vybereš?",
+            options: [
+                { text: "Záhadný úlomek neznámého materiálu nalezený na dně hlubokého kráteru", film: "hope", img: "krater.png" },
+                { text: "Geniální padělek obrazu za miliony, u kterého ani znalci nepoznají pravdu", film: "christopherove", img: "painting.png" },
+                { text: "Starožitné zrcadlo, ve kterém jde zahlédnout odraz věcí ze záhrobí", film: "insidious", img: "mirror.png" },
+                { text: "Bronzový meč s rytinou krále, který prošel desítkami bitev", film: "odyssea", img: "sword.png" }
+            ]
+        }
+    ];
+
+    let currentQ = 0;
+    let scores = {};
+    let currentAudio = null;
+
+    // Seznam filmů, které chceme reálně vyhodnocovat
+    const validFilms = ["insidious", "odyssea", "opusteny", "resident_evil"];
+
+    function stopCurrentAudio() {
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+            currentAudio = null;
+        }
+    }
+
+    function startQuiz() {
+        scores = { call: 0, hope: 0, christopherove: 0, insidious: 0, odyssea: 0, opusteny: 0, resident_evil: 0 };
+        currentQ = 0;
+        document.getElementById("welcome-box").style.display = "none";
+        document.getElementById("quiz-box").style.display = "block";
+        document.getElementById("result-box").style.display = "none";
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        stopCurrentAudio();
+        const qData = questions[currentQ];
+        document.getElementById("progress").innerText = `Otázka ${currentQ + 1} ze ${questions.length}`;
+        document.getElementById("question").innerText = qData.q;
+        
+        const container = document.getElementById("options");
+        container.innerHTML = "";
+
+        const shuffledOptions = [...qData.options].sort(() => Math.random() - 0.5);
+
+        shuffledOptions.forEach(opt => {
+            const btn = document.createElement("button");
+            btn.className = "option-btn";
+
+            let content = "";
+
+            const titleText = opt.title || opt.text;
+            if (titleText) {
+                content += `<span class="opt-title">${titleText}</span>`;
+            }
+
+            if (opt.desc) {
+                content += `<span class="opt-desc">${opt.desc}</span>`;
+            }
+
+            if (opt.audio) {
+                content += `<div class="audio-play-btn" data-audio="${opt.audio}">▶ Přehrát zvuk</div>`;
+            }
+
+            if (opt.img) {
+                const altText = titleText || "možnost";
+                content += `<img src="${opt.img}" class="option-img" alt="${altText}">`;
+            }
+
+            if (opt.video) {
+                content += `
+                <video class="option-video" autoplay muted loop playsinline 
+                       ontimeupdate="if(this.currentTime >= 5){ this.currentTime = 0; }">
+                    <source src="${opt.video}" type="video/mp4">
+                </video>
+                `;
+            }
+    
+            btn.innerHTML = content;
+
+            const audioBtn = btn.querySelector(".audio-play-btn");
+            if (audioBtn) {
+                audioBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    
+                    if (currentAudio && !currentAudio.paused && currentAudio.src.includes(opt.audio)) {
+                        stopCurrentAudio();
+                        audioBtn.innerText = "▶ Přehrát zvuk";
+                    } else {
+                        stopCurrentAudio();
+                        document.querySelectorAll(".audio-play-btn").forEach(b => b.innerText = "▶ Přehrát zvuk");
+                        
+                        currentAudio = new Audio(opt.audio);
+                        currentAudio.currentTime = 2;
+                        
+                        currentAudio.play().then(() => {
+                            audioBtn.innerText = "⏸ Zastavit zvuk";
+                        }).catch(err => {
+                            console.log("Přehrávání selhalo:", err);
+                        });
+                        
+                        currentAudio.onloadedmetadata = () => {
+                            currentAudio.currentTime = 2;
+                        };
+                        
+                        currentAudio.onended = () => {
+                            audioBtn.innerText = "▶ Přehrát zvuk";
+                            currentAudio = null;
+                        };
+                    }
+                };
+            }
+
+            btn.onclick = () => {
+                stopCurrentAudio();
+                // Přičte bod pouze pokud film patří do povolené čtveřice
+                if (scores.hasOwnProperty(opt.film)) {
+                    scores[opt.film]++;
+                }
+                currentQ++;
+                if (currentQ < questions.length) {
+                    renderQuestion();
+                } else {
+                    showResult();
+                }
+            };
+            container.appendChild(btn);
+        });
+    }
+
+    function showResult() {
+        stopCurrentAudio();
+        document.getElementById("quiz-box").style.display = "none";
+        document.getElementById("result-box").style.display = "block";
+
+        // Vybere vítěze výhradně ze 4 povolených filmů
+        const winnerKey = validFilms.reduce((maxKey, currentKey) => {
+            return scores[currentKey] > scores[maxKey] ? currentKey : maxKey;
+        }, validFilms[0]);
+
+        const film = movies[winnerKey];
+
+        document.getElementById("res-movie").innerText = film.title;
+        document.getElementById("res-img").src = film.img;
+        document.getElementById("res-time").innerText = film.time;
+        document.getElementById("res-genre").innerText = film.genre;
+        document.getElementById("res-length").innerText = film.length;
+        document.getElementById("res-score").innerText = film.score;
+        document.getElementById("res-desc").innerText = film.desc;
+    }
+
+    function restartQuiz() {
+        stopCurrentAudio();
+        document.getElementById("result-box").style.display = "none";
+        document.getElementById("welcome-box").style.display = "block";
+    }
+</script>
+
+</body>
+</html>
